@@ -31,6 +31,12 @@ const FrameWithButtons = () => {
     const [filterStatus, setFilterStatus] = useState("");
     const [page, setPage] = useState(1);
     const [rowsPerPage] = useState(5);
+    const [newComplaint, setNewComplaint] = useState({
+        companyName: "",
+        deviceModel: "",
+        faultDescription: "",
+        complaintStatus: "Pending", // Domyślny status reklamacji
+    });
 
     const url = "http://localhost:8081/api/complaints";
 
@@ -55,6 +61,44 @@ const FrameWithButtons = () => {
             .catch((error) => {
                 console.error("There was an error!", error);
                 setLoading(false);
+            });
+    };
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setNewComplaint({ ...newComplaint, [name]: value });
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        fetch(url, {
+            method: "POST",
+            headers: {
+                Authorization: "Bearer " + keycloak.token,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(newComplaint),
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error("Network response was not ok");
+                }
+                return response.json();
+            })
+            .then((data) => {
+                console.log("Complaint added successfully", data);
+                // Opcjonalnie: zaktualizuj stan aplikacji po dodaniu reklamacji
+                setNewComplaint({
+                    companyName: "",
+                    deviceModel: "",
+                    faultDescription: "",
+                    complaintStatus: "Pending",
+                });
+                // Możesz dodać tutaj obsługę, np. zaktualizować stan aplikacji po dodaniu
+                fetchData(); // Pobierz ponownie dane po dodaniu reklamacji
+            })
+            .catch((error) => {
+                console.error("There was an error adding complaint!", error);
             });
     };
 
@@ -147,11 +191,101 @@ const FrameWithButtons = () => {
                                 <Button variant="contained" onClick={() => keycloak.logout()}>
                                     Wyloguj
                                 </Button>
+
+                                {(keycloak.hasRealmRole("user")) && (
+                                    <Card sx={{ marginLeft: 'auto', marginTop: 2 }}>
+                                        <Typography variant="h5" gutterBottom>
+                                            Zalogowany jako użytkownik
+                                        </Typography>
+                                    </Card>
+                                )}
+
+                                {(keycloak.hasRealmRole("technician")) && (
+                                    <Card sx={{ marginLeft: 'auto', marginTop: 2 }}>
+                                        <Typography variant="h5" gutterBottom>
+                                            Zalogowany jako administrator
+                                        </Typography>
+                                    </Card>
+                                )}
+
+
                             </Box>
                         </Card>
                     </Grid>
 
-                    {(keycloak.hasRealmRole("user") || keycloak.hasRealmRole("technician")) && (
+
+                    {(keycloak.hasRealmRole("user")||keycloak.hasRealmRole("technician")) && (
+                        <Grid item xs={12}>
+                            <Card>
+                                <Box p={2}>
+                                    <Typography variant="h5" gutterBottom>
+                                        Dodaj nową reklamację
+                                    </Typography>
+                                    <form onSubmit={handleSubmit}>
+                                        <Grid container spacing={2}>
+                                            <Grid item xs={12}>
+                                                <TextField
+                                                    label="Nazwa firmy"
+                                                    variant="outlined"
+                                                    fullWidth
+                                                    name="companyName"
+                                                    value={newComplaint.companyName}
+                                                    onChange={handleInputChange}
+                                                />
+                                            </Grid>
+                                            <Grid item xs={12}>
+                                                <TextField
+                                                    label="Model urządzenia"
+                                                    variant="outlined"
+                                                    fullWidth
+                                                    name="deviceModel"
+                                                    value={newComplaint.deviceModel}
+                                                    onChange={handleInputChange}
+                                                />
+                                            </Grid>
+                                            <Grid item xs={12}>
+                                                <TextField
+                                                    label="Opis usterki"
+                                                    variant="outlined"
+                                                    fullWidth
+                                                    multiline
+                                                    rows={4}
+                                                    name="faultDescription"
+                                                    value={newComplaint.faultDescription}
+                                                    onChange={handleInputChange}
+                                                />
+                                            </Grid>
+                                            <Grid item xs={12}>
+                                                <FormControl variant="outlined" fullWidth>
+                                                    <InputLabel>Status</InputLabel>
+                                                    <Select
+                                                        value={newComplaint.complaintStatus}
+                                                        onChange={handleInputChange}
+                                                        label="Status"
+                                                        name="complaintStatus"
+                                                    >
+                                                        <MenuItem value="Pending">Oczekująca</MenuItem>
+                                                        <MenuItem value="In Progress">W trakcie realizacji</MenuItem>
+                                                        <MenuItem value="Resolved">Zakończona</MenuItem>
+                                                    </Select>
+                                                </FormControl>
+                                            </Grid>
+                                            <Grid item xs={12}>
+                                                <Button variant="contained" type="submit">
+                                                    Dodaj reklamację
+                                                </Button>
+                                            </Grid>
+                                        </Grid>
+                                    </form>
+                                </Box>
+                            </Card>
+                        </Grid>
+                    )}
+
+
+
+
+                    {(keycloak.hasRealmRole("technician")) && (
                         <Grid item xs={12}>
                             <Card>
                                 <Box p={2}>

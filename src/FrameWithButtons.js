@@ -111,6 +111,15 @@ const FrameWithButtons = () => {
         setPage(value);
     };
 
+    const calculateRemainingTime = (createdAt) => {
+        const createdAtDate = new Date(createdAt);
+        const currentDate = new Date();
+        const millisecondsInDay = 24 * 60 * 60 * 1000; // Liczba milisekund w jednym dniu
+        const timeDifference = currentDate - createdAtDate;
+        const remainingDays = 14 - Math.floor(timeDifference / millisecondsInDay);
+        return remainingDays;
+    };
+
     const filteredData = data.filter((complaint) =>
         complaint.companyName.toLowerCase().includes(searchTerm.toLowerCase()) &&
         (filterStatus === "" || complaint.complaintStatus === filterStatus)
@@ -195,7 +204,9 @@ const FrameWithButtons = () => {
                                                     <TableCell>Nazwa firmy</TableCell>
                                                     <TableCell>Model urządzenia</TableCell>
                                                     <TableCell>Opis usterki</TableCell>
+                                                    <TableCell>Numer reklamacji</TableCell>
                                                     <TableCell>Status reklamacji</TableCell>
+                                                    <TableCell>Pozostały czas (dni)</TableCell>
                                                     <TableCell>Akcje</TableCell>
                                                 </TableRow>
                                             </TableHead>
@@ -204,20 +215,8 @@ const FrameWithButtons = () => {
                                                     <TableRow key={complaint.id}>
                                                         {editIndex === index ? (
                                                             <>
-                                                                <TableCell>
-                                                                    <TextField
-                                                                        name="companyName"
-                                                                        value={editComplaint.companyName}
-                                                                        onChange={handleChange}
-                                                                    />
-                                                                </TableCell>
-                                                                <TableCell>
-                                                                    <TextField
-                                                                        name="deviceModel"
-                                                                        value={editComplaint.deviceModel}
-                                                                        onChange={handleChange}
-                                                                    />
-                                                                </TableCell>
+                                                                <TableCell>{complaint.companyName}</TableCell>
+                                                                <TableCell>{complaint.deviceModel}</TableCell>
                                                                 <TableCell>
                                                                     <TextField
                                                                         name="faultDescription"
@@ -225,6 +224,7 @@ const FrameWithButtons = () => {
                                                                         onChange={handleChange}
                                                                     />
                                                                 </TableCell>
+                                                                <TableCell>{complaint.complaintNumber}</TableCell>
                                                                 <TableCell>
                                                                     <FormControl fullWidth>
                                                                         <InputLabel>Status</InputLabel>
@@ -239,6 +239,7 @@ const FrameWithButtons = () => {
                                                                         </Select>
                                                                     </FormControl>
                                                                 </TableCell>
+                                                                <TableCell>{calculateRemainingTime(complaint.createdAt)}</TableCell>
                                                                 <TableCell>
                                                                     <Button
                                                                         variant="contained"
@@ -259,7 +260,9 @@ const FrameWithButtons = () => {
                                                                 <TableCell>{complaint.companyName}</TableCell>
                                                                 <TableCell>{complaint.deviceModel}</TableCell>
                                                                 <TableCell>{complaint.faultDescription}</TableCell>
+                                                                <TableCell>{complaint.complaintNumber}</TableCell>
                                                                 <TableCell>{complaint.complaintStatus}</TableCell>
+                                                                <TableCell>{calculateRemainingTime(complaint.createdAt)}</TableCell>
                                                                 <TableCell>
                                                                     <Button
                                                                         variant="outlined"

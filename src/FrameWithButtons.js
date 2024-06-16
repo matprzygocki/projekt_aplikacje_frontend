@@ -18,6 +18,7 @@ import {
     MenuItem,
     FormControl,
     InputLabel,
+    Pagination
 } from "@mui/material";
 import keycloak from "./keycloak";
 
@@ -26,6 +27,10 @@ const FrameWithButtons = () => {
     const [data, setData] = useState([]);
     const [editIndex, setEditIndex] = useState(null);
     const [editComplaint, setEditComplaint] = useState({});
+    const [searchTerm, setSearchTerm] = useState("");
+    const [filterStatus, setFilterStatus] = useState("");
+    const [page, setPage] = useState(1);
+    const [rowsPerPage] = useState(5);
 
     const url = "http://localhost:8081/api/complaints";
 
@@ -94,6 +99,27 @@ const FrameWithButtons = () => {
         setEditComplaint({ ...editComplaint, [e.target.name]: e.target.value });
     };
 
+    const handleSearchChange = (e) => {
+        setSearchTerm(e.target.value);
+    };
+
+    const handleStatusChange = (e) => {
+        setFilterStatus(e.target.value);
+    };
+
+    const handlePageChange = (event, value) => {
+        setPage(value);
+    };
+
+    const filteredData = data.filter((complaint) =>
+        complaint.companyName.toLowerCase().includes(searchTerm.toLowerCase()) &&
+        (filterStatus === "" || complaint.complaintStatus === filterStatus)
+    );
+
+    const paginatedData = filteredData.slice(
+        (page - 1) * rowsPerPage,
+        page * rowsPerPage
+    );
 
     return (
         <Container>
@@ -123,14 +149,39 @@ const FrameWithButtons = () => {
                                     <Typography variant="h5" gutterBottom>
                                         Lista reklamacji
                                     </Typography>
-                                    <Grid container direction={"row"}>
-                                        <Button
-                                            variant="outlined"
-                                            onClick={() => fetchData()}
-                                            disabled={loading}
-                                        >
-                                            Pobierz wyniki
-                                        </Button>
+                                    <Grid container direction={"row"} spacing={2}>
+                                        <Grid item>
+                                            <Button
+                                                variant="outlined"
+                                                onClick={() => fetchData()}
+                                                disabled={loading}
+                                            >
+                                                Pobierz wyniki
+                                            </Button>
+                                        </Grid>
+                                        <Grid item>
+                                            <TextField
+                                                label="Szukaj"
+                                                variant="outlined"
+                                                value={searchTerm}
+                                                onChange={handleSearchChange}
+                                            />
+                                        </Grid>
+                                        <Grid item>
+                                            <FormControl variant="outlined" fullWidth>
+                                                <InputLabel>Status</InputLabel>
+                                                <Select
+                                                    value={filterStatus}
+                                                    onChange={handleStatusChange}
+                                                    label="Status"
+                                                >
+                                                    <MenuItem value="">Wszystkie</MenuItem>
+                                                    <MenuItem value="Pending">Oczekujące</MenuItem>
+                                                    <MenuItem value="In Progress">W trakcie realizacji</MenuItem>
+                                                    <MenuItem value="Resolved">Zakończone</MenuItem>
+                                                </Select>
+                                            </FormControl>
+                                        </Grid>
                                         {loading && (
                                             <Box ml={2}>
                                                 <CircularProgress ml={2} />
@@ -141,15 +192,15 @@ const FrameWithButtons = () => {
                                         <Table>
                                             <TableHead>
                                                 <TableRow>
-                                                    <TableCell>Company Name</TableCell>
-                                                    <TableCell>Device Model</TableCell>
-                                                    <TableCell>Fault Description</TableCell>
-                                                    <TableCell>Complaint Status</TableCell>
-                                                    <TableCell>Actions</TableCell>
+                                                    <TableCell>Nazwa firmy</TableCell>
+                                                    <TableCell>Model urządzenia</TableCell>
+                                                    <TableCell>Opis usterki</TableCell>
+                                                    <TableCell>Status reklamacji</TableCell>
+                                                    <TableCell>Akcje</TableCell>
                                                 </TableRow>
                                             </TableHead>
                                             <TableBody>
-                                                {data.map((complaint, index) => (
+                                                {paginatedData.map((complaint, index) => (
                                                     <TableRow key={complaint.id}>
                                                         {editIndex === index ? (
                                                             <>
@@ -182,9 +233,9 @@ const FrameWithButtons = () => {
                                                                             value={editComplaint.complaintStatus}
                                                                             onChange={handleChange}
                                                                         >
-                                                                            <MenuItem value="Pending">Pending</MenuItem>
-                                                                            <MenuItem value="In Progress">In Progress</MenuItem>
-                                                                            <MenuItem value="Resolved">Resolved</MenuItem>
+                                                                            <MenuItem value="Pending">Oczekujące</MenuItem>
+                                                                            <MenuItem value="In Progress">W trakcie realizacji</MenuItem>
+                                                                            <MenuItem value="Resolved">Zakończone</MenuItem>
                                                                         </Select>
                                                                     </FormControl>
                                                                 </TableCell>
@@ -193,13 +244,13 @@ const FrameWithButtons = () => {
                                                                         variant="contained"
                                                                         onClick={handleSaveClick}
                                                                     >
-                                                                        Save
+                                                                        Zapisz
                                                                     </Button>
                                                                     <Button
                                                                         variant="outlined"
                                                                         onClick={handleCancelClick}
                                                                     >
-                                                                        Cancel
+                                                                        Anuluj
                                                                     </Button>
                                                                 </TableCell>
                                                             </>
@@ -214,7 +265,7 @@ const FrameWithButtons = () => {
                                                                         variant="outlined"
                                                                         onClick={() => handleEditClick(index)}
                                                                     >
-                                                                        Rozpatrz
+                                                                        Edytuj
                                                                     </Button>
                                                                 </TableCell>
                                                             </>
@@ -224,6 +275,14 @@ const FrameWithButtons = () => {
                                             </TableBody>
                                         </Table>
                                     </TableContainer>
+                                    <Box display="flex" justifyContent="center" marginTop={2}>
+                                        <Pagination
+                                            count={Math.ceil(filteredData.length / rowsPerPage)}
+                                            page={page}
+                                            onChange={handlePageChange}
+                                            color="primary"
+                                        />
+                                    </Box>
                                 </Box>
                             </Card>
                         </Grid>
